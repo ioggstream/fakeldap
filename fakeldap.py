@@ -2,6 +2,7 @@
 
 # Copyright (c) 2009, Peter Sagerson
 # Copyright (c) 2011, Christo Buschek <crito@30loops.net>
+# Copyright (c) 2013, Roberto Polli <rpolli@babel.it>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +35,26 @@ from collections import defaultdict
 __version__ = "0.5.1"
 
 
-class MockLDAP(object):
+
+def asynchronous(wrapped_f):
+    """Decorator for supporting async functions like search, modify,... """
+    import uuid
+    def f(self, *args, **kwds):
+        item = wrapped_f(self, *args, **kwds)
+        item_uid = str(uuid.uuid4())
+        try:
+            self.returned[item_uid] = item
+        except AttributeError:
+            self.returned = {item_uid: item}
+
+        #print "stored item %s (%r) = %r %r " % (wrapped_f.__name__, [self, args, kwds], item_uid, item)
+        return item_uid
+    # preserve function name. Consider using the itertools.wrap decorator 
+    f.__name__ = wrapped_f.__name__
+    return f
+
+
+class MockLDAP: # here I had to remove the new-style class definition because SimpleLDAPObject uses old-style classes
     """
     This is a stand-in for the python-ldap module; it serves as both the ldap
     module and the LDAPObject class. While it's temping to add some real LDAP
@@ -90,7 +110,7 @@ class MockLDAP(object):
         escape_filter_chars = staticmethod(escape_filter_chars)
 
 
-    def __init__(self, directory=None):
+    def __init__(self, uri=None, directory=None, *args, **kwds): # SimpleLDAPObject takes uri as the first parameter!
         """
         directory is a complex structure with the entire contents of the
         mock LDAP directory. directory must be a dictionary mapping
@@ -205,6 +225,10 @@ class MockLDAP(object):
 
         return value
 
+    @asynchronous
+    def search(self, base, scope, filterstr='(objectClass=*)', attrlist=None, attrsonly=0):
+        return self.search_s(base, scope, filterstr, attrlist, attrsonly)[0]
+
     def start_tls_s(self):
         self.tls_enabled = True
 
@@ -235,6 +259,20 @@ class MockLDAP(object):
             result = self._modify_s(dn, mod_attrs)
 
         return result
+
+    @asynchronous
+    def modify(self, dn, mod_attrs):
+        """Mock asynchronous modify
+        """
+        return self.modify_s(dn, mod_attrs)
+
+    def result(self, res):
+        """Mock async result retrieval"""
+        #print "retrieving %r" % [res]
+        try:
+            return 999, self.returned.pop(res)
+        except KeyError:
+            raise MockLDAP.NO_SUCH_OBJECT
 
     def delete_s(self, dn):
         self._record_call('delete_s', {
@@ -302,7 +340,7 @@ class MockLDAP(object):
         try:
             entry = self.directory[dn]
         except KeyError:
-            raise ldap.NO_SUCH_OBJECT
+            raise self.NO_SUCH_OBJECT
 
         for item in mod_attrs:
             op, key, value = item
@@ -349,7 +387,7 @@ class MockLDAP(object):
         try:
             del self.directory[dn]
         except KeyError:
-            raise ldap.NO_SUCH_OBJECT
+            raise self.NO_SUCH_OBJECT
 
         return (107, [])
 
@@ -370,7 +408,7 @@ class MockLDAP(object):
         attrs = self.directory.get(base)
         print attrs
         if attrs is None:
-            raise ldap.NO_SUCH_OBJECT
+            raise self.NO_SUCH_OBJECT
 
         return [(base, attrs)]
 
@@ -382,7 +420,7 @@ class MockLDAP(object):
         print entry
         try:
             self.directory[dn]
-            raise ALREADY_EXISTS
+            raise self.ALREADY_EXISTS
         except KeyError:
             self.directory[dn] = entry
             return (105,[], len(self.calls), [])
