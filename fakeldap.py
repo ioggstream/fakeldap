@@ -29,6 +29,7 @@
 import sys
 import logging
 import types
+import ldap
 from collections import defaultdict
 
 
@@ -340,7 +341,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         try:
             entry = self.directory[dn]
         except KeyError:
-            raise self.NO_SUCH_OBJECT
+            raise ldap.NO_SUCH_OBJECT
 
         for item in mod_attrs:
             op, key, value = item
@@ -371,7 +372,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         try:
             entry = self.directory[dn]
         except KeyError:
-            raise self.NO_SUCH_OBJECT
+            raise ldap.NO_SUCH_OBJECT
 
         changes = newdn.split('=')
         newfulldn = '%s=%s,%s' % (changes[0], changes[1],
@@ -387,7 +388,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         try:
             del self.directory[dn]
         except KeyError:
-            raise self.NO_SUCH_OBJECT
+            raise ldap.NO_SUCH_OBJECT
 
         return (107, [])
 
@@ -406,7 +407,9 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
 #                (base, scope, filterstr, attrlist, attrsonly))
 
         def _finditem(obj, key):
-            if key in obj: return obj[key]
+            if key in obj: 
+                # exact match
+                return obj[key]
             found = None
             for k, v in obj.items():
                 if isinstance(v,dict):
@@ -419,12 +422,15 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         #attrs = self.directory.get(base)
         attrs = _finditem(self.directory, base)
         if attrs is None:
-            raise self.NO_SUCH_OBJECT
+            raise ldap.NO_SUCH_OBJECT
 
         return [(base, self.filter_attrs(attrlist, attrs))]
 
     def filter_attrs(self, attrlist, attrs):
-        return {name: attr for name, attr in attrs.iteritems() if name in attrlist}
+        if attrlist:
+            return {name: attr for name, attr in attrs.iteritems() if name in attrlist}
+        else:
+            return attrs
 
     def _add_s(self, dn, record):
         # change the record into the proper format for the internal directory
@@ -433,7 +439,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
             entry[item[0]] = item[1]
         try:
             self.directory[dn]
-            raise self.ALREADY_EXISTS
+            raise ldap.ALREADY_EXISTS
         except KeyError:
             self.directory[dn] = entry
             return (105,[], len(self.calls), [])
