@@ -55,6 +55,68 @@ def asynchronous(wrapped_f):
     return f
 
 
+def leq(x,y):
+    return str(x)==str(y)
+def lneq(x,y):
+    return not leq(x,y)
+def land(x,y):
+    return x and y
+def lor(x,y):
+    return x or y
+    
+def evaluate(x, d):
+    if isinstance(x, bool):
+        return x
+        
+    op, a, b = x
+    if isinstance(a, str):
+        # in this case, even b should be
+        # str or int
+        return op(d[a], b)
+    a=evaluate(a, d)
+    b=evaluate(b, d)
+    return op(a,b)
+    
+def clause(s):
+    """Yields an expression to be evaluated"""
+    assert s[0]+s[-1] == "()", "Malformed clause: %s" % s
+    s = s[1:-1]
+    ret = []
+    if s[0] not in "&|":
+        print("simple hit: %r" % s)
+        # simple parse :)
+        x, y = s.split("=", 1)
+        ret.append([leq, x, y])
+        return ret
+    else:
+        print("mixed hit %r" % s)
+        ret.append({'&': land, '|': lor}[s[0]])
+        #remove operator from s
+        for x in subexpressions(s[1:]):
+            ret.extend(clause(x))
+        return ret
+
+def subexpressions(s):
+    """Takes the 1-level subexpressions of a filter
+        (o=1) -> (o=1)
+        (o=1)(o=2) -> (o=1), (o=2)
+        (|(o=1)(o=2))(o=3) -> (|(o=1)(o=2)), (o=3)
+    
+    """
+    l, i, start = 0, 0, 0
+    for x in s:
+        if x=='(': 
+            l+=1
+        if x==')': 
+            l-=1
+            if l == 0:
+                print("subexpression %r" % s[start:i+1])
+                yield s[start:i+1]
+                start=i+1
+        i += 1
+        
+        
+
 class MockLDAP: # here I had to remove the new-style class definition because SimpleLDAPObject uses old-style classes
     """
     This is a stand-in for the python-ldap module; it serves as both the ldap
@@ -397,6 +459,25 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         We can do a SCOPE_BASE search with the default filter. Beyond that,
         you're on your own.
         """
+        # TODO: implement SUBTREE
+        # tree = {
+        #   'cn=plugins,cn=config: {entry}
+        #  }
+        #
+        
+        def subtree_search(base):
+            if not base in tree:
+                # base is not in the tree 
+                raise ldap.NO_SUCH_OBJECT
+                
+            entries_in_base = [x in tree if x.endswith(base)]
+            for e in entries_in_base:
+                # (o=1)
+                # (&(o=1)(o=2))
+                cla
+            
+            
+                
         #FIXME: Implement different scopes
 #        if scope != self.SCOPE_BASE:
 #            raise self.PresetReturnRequiredError('search_s("%s", %d, "%s", "%s", %d)' %
