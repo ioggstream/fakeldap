@@ -234,7 +234,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         # hack, cause lists are not hashable
         if type(arguments[1]) is types.ListType:
             arguments[1] = tuple(arguments[1])
-        print "Set value. api_name: %s, arguments: %s, value: %s" % (api_name, arguments, value)
+        print("Set value. api_name: %s, arguments: %s, value: %s" % (api_name, arguments, value))
         self.return_value_maps[api_name][arguments] = value
 
     def ldap_methods_called_with_arguments(self):
@@ -533,7 +533,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
 
     def filter_attrs(self, attrlist, attrs):
         if attrlist:
-            return {name: attr for name, attr in attrs.iteritems() if name in attrlist}
+            return dict((name, attr) for name, attr in attrs.iteritems() if name in attrlist)
         else:
             return attrs
 
@@ -573,7 +573,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
 
     def _get_return_value(self, api_name, arguments):
         try:
-            print "api: %s, arguments: %s" % (api_name, arguments)
+            print("api: %s, arguments: %s" % (api_name, arguments))
             value = self.return_value_maps[api_name][arguments]
         except KeyError:
             value = None
