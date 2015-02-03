@@ -2,6 +2,8 @@
 fakeldap
 ========
 
+[![Build Status](https://travis-ci.org/ioggstream/fakeldap.png?branch=master)](https://travis-ci.org/ioggstream/fakeldap)
+
 The goal of this module is to provide a simple way to mock ldap backend servers
 for your unittests. It makes it possible to define upfront a set of directory
 entries that can be queried or set fixed return values to ldap queries. It acts
@@ -19,13 +21,14 @@ Installation
 
 Get and install the code::
 
-    $ git clone git://github.com/30loops/fakeldap.git
+    $ git clone git://github.com/ioggstream/fakeldap.git
     $ cd fakeldap
+    $ pip install -r requirements.txt
     $ python setup.py install
 
 If you want, you can run the tests::
 
-    $ python setup.py nosetests
+    $  nosetests -v 
 
 Usage
 =====
