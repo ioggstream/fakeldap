@@ -2,7 +2,9 @@
 fakeldap
 ========
 
-[![Build Status](https://travis-ci.org/ioggstream/fakeldap.png?branch=master)](https://travis-ci.org/ioggstream/fakeldap)
+.. image:: https://travis-ci.org/ioggstream/fakeldap.svg?branch=master
+    :target: https://travis-ci.org/ioggstream/fakeldap
+
 
 The goal of this module is to provide a simple way to mock ldap backend servers
 for your unittests. It makes it possible to define upfront a set of directory
