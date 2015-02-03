@@ -121,7 +121,7 @@ ldap server with a directory of entries::
                 "userPassword": "ldaptest"
         }
     }
-    mock_ldap = MockLDAP(tree) 
+    mock_ldap = MockLDAP(directory=tree) 
 
     record = [
         ('uid', 'crito'),

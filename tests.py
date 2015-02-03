@@ -13,7 +13,8 @@ directory = {
 
 class TestLdapOperations(unittest.TestCase):
     def setUp(self):
-        self.mock_ldap = MockLDAP(directory)
+        """ Create a mock ldap object backed by a given dict"""
+        self.mock_ldap = MockLDAP(directory=directory)
 
     def tearDown(self):
         self.mock_ldap.reset()
