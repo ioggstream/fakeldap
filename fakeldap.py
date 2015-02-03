@@ -209,7 +209,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
             },
         }
         """
-        if directory:
+        if directory is not None:
             self.directory = directory
         else:
             self.directory = defaultdict(lambda: {})
@@ -435,11 +435,11 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
                 # FIXME: Can't handle multiple entries with the same name
                 # its broken right now
                 # do a MOD_ADD, assume it to be a list of values
-                key.append(value)
+                entry[key] = value
             elif op is 1:
                 # do a MOD_DELETE
-                if row is tpyes.ListType:
-                    row = entry[key]
+                row = entry[key]
+                if row is types.ListType:
                     for i in range(len(row)):
                         if value is row[i]:
                             del row[i]
