@@ -33,7 +33,7 @@ import ldap
 from collections import defaultdict
 
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 
 
 
@@ -427,7 +427,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         try:
             entry = self.directory[dn]
         except KeyError:
-            raise ldap.NO_SUCH_OBJECT
+            raise MockLDAP.NO_SUCH_OBJECT
 
         for item in mod_attrs:
             op, key, value = item
@@ -458,7 +458,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         try:
             entry = self.directory[dn]
         except KeyError:
-            raise ldap.NO_SUCH_OBJECT
+            raise MockLDAP.NO_SUCH_OBJECT
 
         changes = newdn.split('=')
         newfulldn = '%s=%s,%s' % (changes[0], changes[1],
@@ -474,7 +474,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         try:
             del self.directory[dn]
         except KeyError:
-            raise ldap.NO_SUCH_OBJECT
+            raise MockLDAP.NO_SUCH_OBJECT
 
         return (107, [])
 
@@ -496,7 +496,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
             # we should raise NO_SUCH_OBJECT
             # In all the other cases we should
             # just return an empty list
-            raise ldap.NO_SUCH_OBJECT
+            raise MockLDAP.NO_SUCH_OBJECT
     
         if scope == ldap.SCOPE_SUBTREE:
             return list(subtree_search(base, filterstr))
@@ -527,7 +527,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
         #attrs = self.directory.get(base)
         attrs = _finditem(self.directory, base)
         if attrs is None:
-            raise ldap.NO_SUCH_OBJECT
+            raise MockLDAP.NO_SUCH_OBJECT
 
         return [(base, self.filter_attrs(attrlist, attrs))]
 
@@ -544,7 +544,7 @@ class MockLDAP: # here I had to remove the new-style class definition because Si
             entry[item[0]] = item[1]
         try:
             self.directory[dn]
-            raise ldap.ALREADY_EXISTS
+            raise MockLDAP.ALREADY_EXISTS
         except KeyError:
             self.directory[dn] = entry
             return (105,[], len(self.calls), [])
